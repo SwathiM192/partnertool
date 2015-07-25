@@ -1,0 +1,133 @@
+heat_template_version: 2013-05-23
+
+description: >
+                Heat Template to onboard Partner VNF
+
+
+parameters:
+  networkID:
+    type: string
+  externalnet:
+    type: string
+    default: ext-net
+
+  flavor1:
+    type: string
+    default: PerimetaISC
+  flavor2:
+    type: string
+    default: PerimetaISC
+resources:
+  keypair:
+    type: OS::Nova::KeyPair
+    properties:
+      name: MetaDCM
+      save_private_key: True
+
+  floatingip1:
+    type: OS::Nova::FloatingIP
+
+  floatingip2:
+    type: OS::Nova::FloatingIP
+
+
+  router:
+    type: OS::Neutron::Router
+    properties:
+      external_gateway_info:
+        network: { get_param: externalnet }
+
+  private_net1:
+    type: OS::Neutron::Net
+  private_subnet1:
+    type: OS::Neutron::Subnet
+    properties:
+      network_id: { get_resource: private_net1 }
+      cidr: 172.10.10.0/24
+  router_interface1:
+    type: OS::Neutron::RouterInterface
+    properties:
+      router_id: { get_resource: router }
+      subnet_id: { get_resource: private_subnet1}
+
+  private_net2:
+    type: OS::Neutron::Net
+  private_subnet2:
+    type: OS::Neutron::Subnet
+    properties:
+      network_id: { get_resource: private_net2 }
+      cidr: 172.20.10.0/24
+  router_interface2:
+    type: OS::Neutron::RouterInterface
+    properties:
+      router_id: { get_resource: router }
+      subnet_id: { get_resource: private_subnet2}
+
+  private_net3:
+    type: OS::Neutron::Net
+  private_subnet3:
+    type: OS::Neutron::Subnet
+    properties:
+      network_id: { get_resource: private_net3 }
+      cidr: 172.30.10.0/24
+  router_interface3:
+    type: OS::Neutron::RouterInterface
+    properties:
+      router_id: { get_resource: router }
+      subnet_id: { get_resource: private_subnet3}
+
+  private_net4:
+    type: OS::Neutron::Net
+  private_subnet4:
+    type: OS::Neutron::Subnet
+    properties:
+      network_id: { get_resource: private_net4 }
+      cidr: 172.40.10.0/24
+  router_interface4:
+    type: OS::Neutron::RouterInterface
+    properties:
+      router_id: { get_resource: router }
+      subnet_id: { get_resource: private_subnet4}
+
+  my_instance1:
+    type: OS::Nova::Server
+    properties:
+      name: Partner_OnboardPerimetaA1
+      image: b2fd1b09-0275-4cb7-8e41-b8da96c732da
+      flavor: {get_param: flavor1}
+      networks:
+        - network: {get_resource: private_net1}
+        - network: {get_resource: private_net2}
+        - network: {get_resource: private_net3}
+        - network: {get_resource: private_net4}
+      key_name: { get_resource: keypair }
+
+  my_instance2:
+    type: OS::Nova::Server
+    properties:
+      name: Partner_OnboardPerimeta22
+      image: b2fd1b09-0275-4cb7-8e41-b8da96c732da
+      flavor: {get_param: flavor2}
+      networks:
+        - network: {get_resource: private_net1}
+        - network: {get_resource: private_net2}
+        - network: {get_resource: private_net3}
+        - network: {get_resource: private_net4}
+      key_name: { get_resource: keypair }
+
+  floatingip_association1:
+    type: OS::Nova::FloatingIPAssociation
+    properties:
+      floating_ip: {get_resource: floatingip1 }
+      server_id: {get_resource: my_instance1 }
+
+  floatingip_association2:
+    type: OS::Nova::FloatingIPAssociation
+    properties:
+      floating_ip: {get_resource: floatingip2 }
+      server_id: {get_resource: my_instance2 }
+
+outputs:
+  private_key:
+    description: private key
+    value: { get_attr: [keypair, private_key] }
