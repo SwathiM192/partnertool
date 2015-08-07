@@ -1,0 +1,21 @@
+heat_template_version: 2013-05-23
+
+description: >
+                Heat Template to onboard Partner VNF
+
+resources:
+
+  port2:
+   type: OS::Neutron::Port
+   properties:
+     name: Partner_VNF_Port1
+     network_id: e1e588ba-18c8-4bd5-853a-f82911eb488b
+
+  my_instance2:
+   type: OS::Nova::Server
+   properties:
+      name: Partner_Onboard1
+      image: c9c798b8-2679-491b-8bd9-36c65d610c14
+      flavor: m1.small
+      networks:
+      - port: { get_resource: port2 }
